@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" formatted="false">琴键瀑布</string>
+    <string name="s00_loading" formatted="false">准备中…</string>
+    <string name="s01_line" formatted="false">坐到琴前或桌前，选一种开法</string>
+    <string name="have_piano" formatted="false">我有琴</string>
+    <string name="have_piano_hint" formatted="false">钢琴或电子琴：光条落在你的真键上</string>
+    <string name="no_piano" formatted="false">没有琴，用桌面</string>
+    <string name="no_piano_hint" formatted="false">桌上放一架 1:1 虚拟琴，手指按下去就出声</string>
+    <string name="welcome" formatted="false">坐到琴前，先让我认识你的键盘</string>
+    <string name="count_hint" formatted="false">数一下白键：52 / 45 / 43 / 36 / 29 个</string>
+    <string name="count_whites">%1$d 键 = %2$d 个白键</string>
+    <string name="start_align" formatted="false">开始对齐</string>
+    <string name="back" formatted="false">返回</string>
+    <string name="pull_here" formatted="false">拉到眼前</string>
+    <string name="left_end" formatted="false">把手柄前端碰到最左边白键的左前角，按扳机</string>
+    <string name="hand_alt" formatted="false">用手：右手食指点住那个角，左手捏一下</string>
+    <string name="right_end" formatted="false">再碰最右边白键的右前角，按扳机</string>
+    <string name="s04_live">现在 %1$.1f cm · 最近：%2$d 键</string>
+    <string name="s04_wait" formatted="false">手柄前端移到右端，长度会实时显示</string>
+    <string name="redo_left" formatted="false">重来左端</string>
+    <string name="finetune" formatted="false">看一下亮线和琴键缝对不对得上</string>
+    <string name="joystick" formatted="false">摇杆左右转动 · 拖两端亮环微调</string>
+    <string name="joystick_turn" formatted="false">摇杆左右转动</string>
+    <string name="s05_size">%1$d 键 · 量得 %2$.1f cm</string>
+    <string name="midi_range" formatted="false">接了 MIDI：按一下最左和最右的键</string>
+    <string name="midi_range_ok" formatted="false">✓ 音域已核对</string>
+    <string name="midi_transposed" formatted="false">琴开了移调，请先在琴上关掉</string>
+    <string name="check_c" formatted="false">点亮中央 C 检查</string>
+    <string name="done" formatted="false">好了</string>
+    <string name="s06_text">量出来 %1$.0f cm，更像 %2$d 键（%3$.0f cm）还是 %4$d 键（%5$.0f cm）？</string>
+    <string name="keys_n">%1$d 键</string>
+    <string name="remeasure" formatted="false">重新量</string>
+    <string name="s02_repin" formatted="false">碰一下任意一端的键角（最左或最右）</string>
+    <string name="hand_alt_repin" formatted="false">手柄前端 + 扳机，或右手食指点住 + 左手捏一下；琴整体平移过去</string>
+    <string name="cancel" formatted="false">取消</string>
+    <string name="level_n">%1$d 级</string>
+    <string name="hands_both" formatted="false">双手</string>
+    <string name="hands_right" formatted="false">右手</string>
+    <string name="realign_keyboard" formatted="false">重新对齐键盘</string>
+    <string name="place_again" formatted="false">重新放</string>
+    <string name="hands" formatted="false">手</string>
+    <string name="hand_left" formatted="false">左手</string>
+    <string name="hand_right" formatted="false">右手</string>
+    <string name="hand_both" formatted="false">双手</string>
+    <string name="mode" formatted="false">模式</string>
+    <string name="mode_listen" formatted="false">听一遍</string>
+    <string name="mode_auto" formatted="false">跟着走</string>
+    <string name="mode_wait" formatted="false">等我按</string>
+    <string name="speed" formatted="false">速度</string>
+    <string name="wait_off" formatted="false">真琴要用 USB-C 线连 MIDI 才能等你按；也可以换成桌面虚拟琴</string>
+    <string name="go_connect" formatted="false">去连接</string>
+    <string name="to_virtual" formatted="false">换虚拟琴</string>
+    <string name="input_virtual" formatted="false">手指按虚拟键 · 有声音</string>
+    <string name="input_midi">MIDI：已连接 %1$s</string>
+    <string name="change" formatted="false">换</string>
+    <string name="start" formatted="false">开始</string>
+    <string name="get_ready" formatted="false">准备</string>
+    <string name="hands_ready" formatted="false">放下手柄，手放到琴上</string>
+    <string name="direct_start" formatted="false">直接开始</string>
+    <string name="octave" formatted="false">像是琴移了八度？</string>
+    <string name="fix" formatted="false">修正</string>
+    <string name="wait_you" formatted="false">等你按</string>
+    <string name="mute" formatted="false">静音</string>
+    <string name="unmute" formatted="false">已静音</string>
+    <string name="pause" formatted="false">暂停（按住）</string>
+    <string name="paused" formatted="false">暂停</string>
+    <string name="restart" formatted="false">从头</string>
+    <string name="back_bar" formatted="false">后退一小节</string>
+    <string name="library" formatted="false">回曲库</string>
+    <string name="s12_repin" formatted="false">琴的位置偏了？重对一端</string>
+    <string name="go_on" formatted="false">继续</string>
+    <string name="finished" formatted="false">弹完了！</string>
+    <string name="new_best" formatted="false">新的最好成绩！</string>
+    <string name="best">最好成绩 %1$d%%</string>
+    <string name="score_counts">准 %1$d · 早晚 %2$d · 漏 %3$d · 错 %4$d</string>
+    <string name="wait_result">按错 %1$d 次 · 平均每组等 %2$.1f 秒</string>
+    <string name="time_only">用时 %1$s</string>
+    <string name="no_score" formatted="false">接 MIDI 或用桌面虚拟琴才能评分</string>
+    <string name="other_song" formatted="false">换一首</string>
+    <string name="again" formatted="false">再来一遍</string>
+    <string name="try_follow" formatted="false">试试跟着走</string>
+    <string name="faster" formatted="false">快一档再来</string>
+    <string name="s16_real" formatted="false">键盘位置还对吗？</string>
+    <string name="s16_yes" formatted="false">对，去曲库</string>
+    <string name="s16_no" formatted="false">不对，重新对齐</string>
+    <string name="repin" formatted="false">重对一端</string>
+    <string name="s16_virtual" formatted="false">上次的琴在这里，继续？</string>
+    <string name="move_here" formatted="false">移到面前</string>
+    <string name="s17_lost" formatted="false">没找回上次的键盘位置（房间灯光或琴的位置可能变了）</string>
+    <string name="realign" formatted="false">重新对齐</string>
+    <string name="look_back" formatted="false">看回琴键</string>
+    <string name="s18_hint" formatted="false">位置找回来之前先暂停，找回来也不会自动继续</string>
+    <string name="s19_text" formatted="false">没有空间权限就记不住琴的位置，也找不到桌面</string>
+    <string name="s19_grant" formatted="false">去授权</string>
+    <string name="s19_without" formatted="false">先这样用</string>
+    <string name="find_desk" formatted="false">看一眼面前的桌子</string>
+    <string name="use_virtual_desk" formatted="false">没有桌子，直接用虚拟桌面</string>
+    <string name="s23_title" formatted="false">用这张虚拟桌子</string>
+    <string name="desk_below_eyes">桌面在眼睛下方 %1$d cm</string>
+    <string name="lower5" formatted="false">降低 5 cm</string>
+    <string name="higher5" formatted="false">升高 5 cm</string>
+    <string name="s23_hint" formatted="false">射线按住扳机可拖动桌子 · 摇杆左右转动</string>
+    <string name="desk_done" formatted="false">好了，放琴</string>
+    <string name="place_piano" formatted="false">用手柄指着桌面，扳机放下琴</string>
+    <string name="s24_placed" formatted="false">琴放好了。指着琴按住扳机还能拖</string>
+    <string name="keys" formatted="false">键数</string>
+    <string name="s24_hint" formatted="false">摇杆左右转动 · 靠近桌沿会自动对齐</string>
+    <string name="s24_no_controller" formatted="false">没有手柄：看着桌面捏一下也能放</string>
+    <string name="s24_off_desk" formatted="false">射线没落在桌面上</string>
+    <string name="snapped" formatted="false">已对齐桌沿 ✓</string>
+    <string name="piano_menu" formatted="false">琴</string>
+    <string name="piano_menu_title" formatted="false">虚拟琴</string>
+    <string name="hide" formatted="false">隐藏</string>
+    <string name="show" formatted="false">显示</string>
+    <string name="settings" formatted="false">设置</string>
+    <string name="set_piano" formatted="false">琴</string>
+    <string name="real_piano" formatted="false">真琴</string>
+    <string name="virtual_piano" formatted="false">桌面虚拟琴</string>
+    <string name="set_language" formatted="false">语言</string>
+    <string name="set_volume" formatted="false">音量</string>
+    <string name="set_metronome" formatted="false">节拍器</string>
+    <string name="set_lookahead" formatted="false">提前量</string>
+    <string name="seconds_n">%1$d 秒</string>
+    <string name="set_side" formatted="false">面板位置</string>
+    <string name="side_left" formatted="false">偏左</string>
+    <string name="side_center" formatted="false">居中</string>
+    <string name="side_right" formatted="false">偏右</string>
+    <string name="input_source" formatted="false">输入源</string>
+    <string name="about_title" formatted="false">关于</string>
+    <string name="about_samples" formatted="false">钢琴采样：Salamander Grand Piano（Yamaha C5），作者 Alexander Holm，CC-BY 3.0</string>
+    <string name="about_songs" formatted="false">曲目均为公有领域作品；音符由本应用录入，左手伴奏与简化编配见下</string>
+    <string name="about_fonts" formatted="false">字体：Noto Sans / Noto Sans SC（SIL OFL 1.1）</string>
+    <string name="close" formatted="false">关闭</string>
+    <string name="midi_item" formatted="false">MIDI 键盘（USB-C 线连数码琴）</string>
+    <string name="midi_unsupported" formatted="false">这台设备不支持 MIDI</string>
+    <string name="midi_connected">已连接：%1$s</string>
+    <string name="midi_none" formatted="false">没检测到 MIDI 设备，插上数码琴会自动出现</string>
+    <string name="no_charge" formatted="false">插着琴时头显不充电</string>
+    <string name="midi_test" formatted="false">按一下中央 C 试试</string>
+    <string name="midi_test_ok" formatted="false">✓ 收到中央 C</string>
+    <string name="input_none" formatted="false">不用（只跟着走）</string>
+    <string name="ok" formatted="false">确定</string>
+</resources>

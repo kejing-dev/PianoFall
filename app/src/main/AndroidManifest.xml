@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- No network, no camera, no microphone (design `offline`): plane detection and anchors need no runtime
+         permission on SDK 6.1 (design container.permissions; device to be confirmed). USB MIDI is optional. -->
+    <uses-feature android:name="android.software.midi" android:required="false" />
+
+    <application
+        android:name=".platform.SpatialApplication"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.PianoFall"
+        tools:targetApi="31">
+
+        <activity
+            android:name=".platform.LaunchActivity"
+            android:exported="true"
+            android:theme="@style/Theme.PianoFall">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- DefaultStage: one Mixed Stage (Full Space, passthrough) holds the whole product -->
+            <meta-data
+                android:name="pico.spatial.stage.id"
+                android:value="PianoFallStage" />
+            <meta-data
+                android:name="pico.spatial.stage.style"
+                android:value="1" />
+            <meta-data
+                android:name="pico.spatial.stage.immersion"
+                android:value="0" />
+            <meta-data
+                android:name="pico.spatial.stage.immersion_min"
+                android:value="0" />
+            <meta-data
+                android:name="pico.spatial.stage.immersion_max"
+                android:value="0" />
+        </activity>
+
+        <meta-data android:name="icon.3d.list" android:resource="@array/icon_3d_list" />
+        <meta-data android:name="icon.sdf.list" android:resource="@array/icon_sdf_list" />
+    </application>
+
+</manifest>

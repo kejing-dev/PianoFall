@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" formatted="false">Piano Fall</string>
+    <string name="s00_loading" formatted="false">Getting ready…</string>
+    <string name="s01_line" formatted="false">Sit at your piano or a desk, then pick one</string>
+    <string name="have_piano" formatted="false">I have a piano</string>
+    <string name="have_piano_hint" formatted="false">Piano or keyboard: bars land on your real keys</string>
+    <string name="no_piano" formatted="false">No piano — use a desk</string>
+    <string name="no_piano_hint" formatted="false">A life-size virtual piano on the desk that really plays</string>
+    <string name="welcome" formatted="false">Sit at your piano — let\'s get to know your keyboard</string>
+    <string name="count_hint" formatted="false">Count the white keys: 52 / 45 / 43 / 36 / 29</string>
+    <string name="count_whites">%1$d keys = %2$d white keys</string>
+    <string name="start_align" formatted="false">Start aligning</string>
+    <string name="back" formatted="false">Back</string>
+    <string name="pull_here" formatted="false">Bring here</string>
+    <string name="left_end" formatted="false">Touch the controller tip to the front-left corner of the lowest white key, then pull the trigger</string>
+    <string name="hand_alt" formatted="false">Hands: hold your right index finger on the corner and pinch with your left</string>
+    <string name="right_end" formatted="false">Now the front-right corner of the highest white key</string>
+    <string name="s04_live">Now %1$.1f cm · nearest: %2$d keys</string>
+    <string name="s04_wait" formatted="false">Move the tip to the right end; the length shows live</string>
+    <string name="redo_left" formatted="false">Redo left end</string>
+    <string name="finetune" formatted="false">Check that the glowing lines sit on the gaps between keys</string>
+    <string name="joystick" formatted="false">Joystick left/right to rotate · drag the end rings to adjust</string>
+    <string name="joystick_turn" formatted="false">Joystick left/right to rotate</string>
+    <string name="s05_size">%1$d keys · measured %2$.1f cm</string>
+    <string name="midi_range" formatted="false">MIDI connected: press the lowest and the highest key</string>
+    <string name="midi_range_ok" formatted="false">✓ Range checked</string>
+    <string name="midi_transposed" formatted="false">Your keyboard is transposed — switch that off on the keyboard</string>
+    <string name="check_c" formatted="false">Light up middle C</string>
+    <string name="done" formatted="false">Done</string>
+    <string name="s06_text">It measures %1$.0f cm. Is it %2$d keys (%3$.0f cm) or %4$d keys (%5$.0f cm)?</string>
+    <string name="keys_n">%1$d keys</string>
+    <string name="remeasure" formatted="false">Measure again</string>
+    <string name="s02_repin" formatted="false">Touch either end\'s corner (lowest or highest key)</string>
+    <string name="hand_alt_repin" formatted="false">Controller tip + trigger, or right index + left pinch; the whole keyboard moves there</string>
+    <string name="cancel" formatted="false">Cancel</string>
+    <string name="level_n">Level %1$d</string>
+    <string name="hands_both" formatted="false">Both hands</string>
+    <string name="hands_right" formatted="false">Right hand</string>
+    <string name="realign_keyboard" formatted="false">Realign keyboard</string>
+    <string name="place_again" formatted="false">Place again</string>
+    <string name="hands" formatted="false">Hands</string>
+    <string name="hand_left" formatted="false">Left</string>
+    <string name="hand_right" formatted="false">Right</string>
+    <string name="hand_both" formatted="false">Both</string>
+    <string name="mode" formatted="false">Mode</string>
+    <string name="mode_listen" formatted="false">Listen</string>
+    <string name="mode_auto" formatted="false">Play along</string>
+    <string name="mode_wait" formatted="false">Wait for me</string>
+    <string name="speed" formatted="false">Speed</string>
+    <string name="wait_off" formatted="false">A real piano needs USB-C MIDI to wait for you; or switch to the desk piano</string>
+    <string name="go_connect" formatted="false">Connect</string>
+    <string name="to_virtual" formatted="false">Desk piano</string>
+    <string name="input_virtual" formatted="false">Fingers on the virtual keys · with sound</string>
+    <string name="input_midi">MIDI: connected %1$s</string>
+    <string name="change" formatted="false">Change</string>
+    <string name="start" formatted="false">Start</string>
+    <string name="get_ready" formatted="false">Get ready</string>
+    <string name="hands_ready" formatted="false">Put the controllers down, hands on the keys</string>
+    <string name="direct_start" formatted="false">Start now</string>
+    <string name="octave" formatted="false">Keyboard an octave off?</string>
+    <string name="fix" formatted="false">Fix</string>
+    <string name="wait_you" formatted="false">Your turn</string>
+    <string name="mute" formatted="false">Mute</string>
+    <string name="unmute" formatted="false">Muted</string>
+    <string name="pause" formatted="false">Pause (hold)</string>
+    <string name="paused" formatted="false">Paused</string>
+    <string name="restart" formatted="false">From the top</string>
+    <string name="back_bar" formatted="false">Back one bar</string>
+    <string name="library" formatted="false">Song list</string>
+    <string name="s12_repin" formatted="false">Keyboard off? Re-pin one end</string>
+    <string name="go_on" formatted="false">Continue</string>
+    <string name="finished" formatted="false">You played it!</string>
+    <string name="new_best" formatted="false">New best!</string>
+    <string name="best">Best %1$d%%</string>
+    <string name="score_counts">On time %1$d · Early/late %2$d · Missed %3$d · Wrong %4$d</string>
+    <string name="wait_result">Wrong keys %1$d · Average wait %2$.1f s per group</string>
+    <string name="time_only">Time %1$s</string>
+    <string name="no_score" formatted="false">Connect MIDI or use the desk piano to get a score</string>
+    <string name="other_song" formatted="false">Another song</string>
+    <string name="again" formatted="false">Again</string>
+    <string name="try_follow" formatted="false">Try playing along</string>
+    <string name="faster" formatted="false">Faster, again</string>
+    <string name="s16_real" formatted="false">Is the keyboard still in the right place?</string>
+    <string name="s16_yes" formatted="false">Yes, to songs</string>
+    <string name="s16_no" formatted="false">No, realign</string>
+    <string name="repin" formatted="false">Re-pin one end</string>
+    <string name="s16_virtual" formatted="false">Your piano from last time is here. Carry on?</string>
+    <string name="move_here" formatted="false">Move here</string>
+    <string name="s17_lost" formatted="false">Couldn\'t find last time\'s keyboard (the light or the piano may have moved)</string>
+    <string name="realign" formatted="false">Realign</string>
+    <string name="look_back" formatted="false">Look back at the keys</string>
+    <string name="s18_hint" formatted="false">Paused until the position is back; it won\'t restart by itself</string>
+    <string name="s19_text" formatted="false">Without spatial permission the app can\'t remember the piano or find your desk</string>
+    <string name="s19_grant" formatted="false">Allow</string>
+    <string name="s19_without" formatted="false">Use without</string>
+    <string name="find_desk" formatted="false">Look at the desk in front of you</string>
+    <string name="use_virtual_desk" formatted="false">No desk — use a virtual one</string>
+    <string name="s23_title" formatted="false">Use this virtual desk</string>
+    <string name="desk_below_eyes">Desk top %1$d cm below your eyes</string>
+    <string name="lower5" formatted="false">Lower 5 cm</string>
+    <string name="higher5" formatted="false">Raise 5 cm</string>
+    <string name="s23_hint" formatted="false">Point and hold the trigger to drag the desk · joystick to rotate</string>
+    <string name="desk_done" formatted="false">Done, place piano</string>
+    <string name="place_piano" formatted="false">Point at the desk and pull the trigger to place the piano</string>
+    <string name="s24_placed" formatted="false">Piano placed. Point at it and hold the trigger to drag it</string>
+    <string name="keys" formatted="false">Keys</string>
+    <string name="s24_hint" formatted="false">Joystick to rotate · snaps to the desk edge</string>
+    <string name="s24_no_controller" formatted="false">No controller: look at the desk and pinch</string>
+    <string name="s24_off_desk" formatted="false">The ray isn\'t on the desk</string>
+    <string name="snapped" formatted="false">Snapped to the desk edge ✓</string>
+    <string name="piano_menu" formatted="false">Piano</string>
+    <string name="piano_menu_title" formatted="false">Virtual piano</string>
+    <string name="hide" formatted="false">Hide</string>
+    <string name="show" formatted="false">Show</string>
+    <string name="settings" formatted="false">Settings</string>
+    <string name="set_piano" formatted="false">Piano</string>
+    <string name="real_piano" formatted="false">Real</string>
+    <string name="virtual_piano" formatted="false">Desk piano</string>
+    <string name="set_language" formatted="false">Language</string>
+    <string name="set_volume" formatted="false">Volume</string>
+    <string name="set_metronome" formatted="false">Metronome</string>
+    <string name="set_lookahead" formatted="false">Look-ahead</string>
+    <string name="seconds_n">%1$d s</string>
+    <string name="set_side" formatted="false">Panel</string>
+    <string name="side_left" formatted="false">Left</string>
+    <string name="side_center" formatted="false">Centre</string>
+    <string name="side_right" formatted="false">Right</string>
+    <string name="input_source" formatted="false">Input source</string>
+    <string name="about_title" formatted="false">About</string>
+    <string name="about_samples" formatted="false">Piano samples: Salamander Grand Piano (Yamaha C5) by Alexander Holm, CC-BY 3.0</string>
+    <string name="about_songs" formatted="false">All works are in the public domain; notes typed in by this app, our left hands and simplifications noted below</string>
+    <string name="about_fonts" formatted="false">Fonts: Noto Sans / Noto Sans SC (SIL OFL 1.1)</string>
+    <string name="close" formatted="false">Close</string>
+    <string name="midi_item" formatted="false">MIDI keyboard (digital piano by USB-C)</string>
+    <string name="midi_unsupported" formatted="false">This device does not support MIDI</string>
+    <string name="midi_connected">Connected: %1$s</string>
+    <string name="midi_none" formatted="false">No MIDI device yet — plug in a digital piano</string>
+    <string name="no_charge" formatted="false">The headset won\'t charge while the keyboard is plugged in</string>
+    <string name="midi_test" formatted="false">Press middle C to test</string>
+    <string name="midi_test_ok" formatted="false">✓ Middle C received</string>
+    <string name="input_none" formatted="false">None (play along only)</string>
+    <string name="ok" formatted="false">OK</string>
+</resources>
