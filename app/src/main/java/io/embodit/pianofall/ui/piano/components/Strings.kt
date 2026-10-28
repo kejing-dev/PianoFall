@@ -45,7 +45,7 @@ fun isZh(): Boolean = LocalPianoResources.current.configuration.locales[0].langu
 /** Panel sizes (design `spatialLayout.panel`: 0.34 x 0.24 m side panel, mini bar), in dp. */
 object PanelSizes {
     const val SIDE_W = 480f
-    const val SIDE_H = 340f
+    const val SIDE_H = 400f
 
     const val MINI_W = 300f
     const val MINI_H = 64f

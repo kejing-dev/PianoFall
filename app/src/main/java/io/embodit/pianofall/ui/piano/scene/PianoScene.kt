@@ -69,6 +69,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal object ActiveScene {
     @Volatile var scene: PianoScene? = null
@@ -235,10 +236,6 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
         this.rig = rig
         rig.world(PanelIds.SIDE, PanelSizes.SIDE_W, PanelSizes.SIDE_H, PANEL_SCALE)
         rig.world(PanelIds.MINI, PanelSizes.MINI_W, PanelSizes.MINI_H, PANEL_SCALE)
-        audio = PianoAudio(context.applicationContext).also {
-            it.muted = ui.settings.muted
-            it.volume = ui.settings.volume
-        }
         midi = MidiInput(context.applicationContext).also { m ->
             m.onNote = { note, vel, on, at -> onMidi(note, vel, on, at) }
             m.onDevice = { name -> sink(PianoEvent.MidiDevice(name, m.available)) }
@@ -251,7 +248,7 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
         buildJob =
             scope?.launch {
                 try {
-                    build(root, kr, t0)
+                    build(root, kr, t0, context)
                 } catch (t: Throwable) {
                     if (t !is CancellationException) PianoLog.e("SCENE build failed: $t", t)
                     throw t
@@ -273,7 +270,17 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
      * Materials, meshes and textures, then the entities, one step at a time: a mesh costs about a rendered frame
      * and blocking the main thread for all of them raised an ANR on the emulator (Trace Light).
      */
-    private suspend fun build(root: Entity, kr: Entity, t0: Long) {
+    private suspend fun build(root: Entity, kr: Entity, t0: Long, context: Context) {
+        // the sampler opens 30 asset files: off the main thread, while the Stage comes up (cold-start focus ANR)
+        val a = withContext(Dispatchers.IO) { PianoAudio(context.applicationContext) }
+        if (!attached) {
+            a.release()
+            return
+        }
+        audio = a.also {
+            it.muted = ui.settings.muted
+            it.volume = ui.settings.volume
+        }
         delay(BUILD_START_MS)
         val shared = SharedResources()
         this.shared = shared

@@ -153,7 +153,7 @@ private fun ColumnScope.Page(s: PianoUiState, onEvent: (PianoEvent) -> Unit) {
             Action(if (s.virtual) rs(R.string.place_again) else rs(R.string.realign), "realign", primary = true, width = 170.dp) { onEvent(PianoEvent.RealignClicked) }
         }
         "S18" -> {
-            val repin = SystemClock.elapsedRealtime() - s.lostSinceMs >= 5_000L
+            val repin = s.lostTick > 0 || SystemClock.elapsedRealtime() - s.lostSinceMs >= 5_000L
             Step(rs(R.string.look_back), rs(R.string.s18_hint), null) {
                 if (repin && !s.virtual) Action(rs(R.string.repin), "repin", width = 160.dp) { onEvent(PianoEvent.RepinClicked) }
                 if (repin && s.virtual) Action(rs(R.string.move_here), "moveHere", width = 160.dp) { onEvent(PianoEvent.MoveHereClicked) }

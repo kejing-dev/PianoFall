@@ -91,7 +91,7 @@ PICO_6_1_Factory2 --adb-device emulator-5562 -y`. Camera down: `tools/harness/em
 | S10 / S11 | after the countdown; wait mode stops at the first group (S11, keys breathe green); `noteOn "" 60` |
 | S12 / S13 | `ui pause` · `finish "" 30,6,4,2` (follow mode shows stars) |
 | S14 / S15 | `state S14` · `state S15` |
-| S16 / S17 / S18 / S19 | relaunch after seeding · `anchorFail on` + relaunch · `anchorRemoved` · `state S19` |
+| S16 / S17 / S18 / S19 | relaunch after seeding · `anchorFail on` then `state S19` + `ui grant` (re-runs start-up in the same process; a relaunch clears the flag) · `anchorRemoved` · `state S19` |
 | S22 / S23 / S24 | `state S22` (5 s -> S23 without a near desk) · `ui deskDone` · `ghost "" 0.1,0.2,0` / `ghost "" 0,0.27,1` |
 
 The broadcast does not reach the app on the Swan headset: there only real input.

@@ -93,6 +93,8 @@ data class PianoUiState(
     val trackingLost: Boolean = false,
     /** S18: since when (elapsedRealtime); the re-pin link shows after 5 s. */
     val lostSinceMs: Long = 0L,
+    /** S18: bumped when the 5 s are over, so the panel shows the re-pin button. */
+    val lostTick: Int = 0,
     /** S19 "先这样用": nothing is stored this session. */
     val noSave: Boolean = false,
     val overlay: Overlay = Overlay.NONE,

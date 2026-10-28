@@ -207,7 +207,11 @@ class PianoViewModel(
                     go("S01")
                 }
             }
-            is PianoEvent.MidiDevice -> update { it.copy(midiName = e.name, midiAvailable = e.available, midiTestOk = if (e.name == null) false else it.midiTestOk) }
+            is PianoEvent.MidiDevice -> {
+                update { it.copy(midiName = e.name, midiAvailable = e.available, midiTestOk = if (e.name == null) false else it.midiTestOk) }
+                // the keyboard went away: a real piano cannot wait any more (S20)
+                if (_state.value.waitUnavailable && _state.value.options.mode == PlayMode.WAIT) update { it.copy(options = it.options.copy(mode = PlayMode.FOLLOW)) }
+            }
             is PianoEvent.MidiNote -> midiNote(e.midi, e.on)
 
             is PianoEvent.TrackingChanged -> update { it.copy(trackingLost = e.lost) }
@@ -252,6 +256,8 @@ class PianoViewModel(
                         else -> null
                     }
                 PianoLog.i("ANCHOR startup mode=${saved.mode.tag} left=${l != null} right=${r != null} loaded=${found?.size}")
+                // anchors of an older keyboard that a crash or a quit left behind
+                found?.filter { it.id != saved.leftAnchor && it.id != saved.rightAnchor }?.forEach { anchors.remove(it.id) }
                 update { it.copy(mode = saved.mode, count = if (saved.mode == PianoMode.REAL) saved.count else it.count, virtualCount = if (saved.mode == PianoMode.VIRTUAL) saved.count else it.virtualCount) }
                 if (frame != null) {
                     update { it.copy(keyboard = frame, anchorIds = listOfNotNull(saved.leftAnchor, saved.rightAnchor), outlineUntilMs = clock() + OUTLINE_MS, leftEnd = frame.origin, rightEnd = frame.right) }
@@ -480,7 +486,7 @@ class PianoViewModel(
     private fun pickSong(id: String) {
         val song = Library.song(id) ?: return
         val mem = _state.value.songs[id] ?: SongMemory()
-        val mode = if (mem.played) PlayMode.FOLLOW else PlayMode.LISTEN
+        val mode = if (mem.played) PlayMode.FOLLOW else PlayMode.LISTEN // never WAIT here: S20 may forbid it
         val hands = if (!song.hasLeft && mem.hands != io.embodit.pianofall.domain.HandSel.RIGHT) io.embodit.pianofall.domain.HandSel.RIGHT else mem.hands
         update { it.copy(songId = id, options = it.options.copy(hands = hands, speed = mem.speed, mode = mode), score = null, overlay = Overlay.NONE) }
         go("S08")
@@ -589,13 +595,13 @@ class PianoViewModel(
         if (lost) {
             if (s.designState == "S18" || s.keyboard == null || s.aligning || s.designState in setOf("S00", "S01", "S22", "S23", "S24")) return
             countdownJob?.cancel()
-            update { it.copy(pausedFrom = if (s.inRun) s.designState else s.pausedFrom, lostSinceMs = clock(), repinFrom = s.designState) }
+            update { it.copy(pausedFrom = if (s.inRun) s.designState else s.pausedFrom, lostSinceMs = clock(), lostTick = 0, repinFrom = s.designState) }
             PianoLog.i("ANCHOR position lost in ${s.designState}")
             go("S18")
             lostJob?.cancel()
             lostJob = scope.launch {
                 delay(LOST_REPIN_MS)
-                update { it.copy(lostSinceMs = it.lostSinceMs) } // the panel re-reads the time: the re-pin link shows
+                update { it.copy(lostTick = it.lostTick + 1) } // a new state: the panel re-reads the time, the re-pin button shows
             }
         } else if (s.designState == "S18") {
             PianoLog.i("ANCHOR position back")
@@ -637,7 +643,7 @@ class PianoViewModel(
 
     fun debugDesk(desk: Desk) = update { it.copy(desk = desk) }
 
-    fun debugMidi(name: String?) = update { it.copy(midiName = name, midiAvailable = true) }
+    fun debugMidi(name: String?) = onEvent(PianoEvent.MidiDevice(name, true))
 
     fun debugJump(id: String) {
         countdownJob?.cancel()
