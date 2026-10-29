@@ -109,3 +109,9 @@ User on the headset: too many accidental keys, hard to control. `domain/Press.kt
 - Desk finding only accepts a horizontal plane 0.25 - 0.75 m below the eyes, ≥ 0.21 m², ahead (±70°) and within 1 m.
 - Hand tracking is not started on the emulator (it stopped the gaze + pinch simulation in Spatial Ruler).
 - Textured plates use v = 1 at the bitmap top (PlateUv); countdown digits and frame labels go through it.
+
+## v0.1.2 side panel (D21)
+- Not over the keys, the side panel (and the mini bar before alignment) stands at `PanelStation`: placed once 0.55 m ahead / 5° down, then fixed in the room. No per-frame turning, no lazy follow (LazyFollow removed).
+- It moves only by its handle (`PanelHandle`, the bar under the bottom edge, system drag) or 「拉到眼前」; it faces the user once on drop / recall. Entering S03 recalls it once.
+- 「贴在琴键上」 (S07/S08/S12/S13/S16/S18 with a keyboard) is unchanged and has no handle.
+- Debug: `panelDrag "" dx,dy,dz` (hand travel, m), `pullPanel`, `panels`.
