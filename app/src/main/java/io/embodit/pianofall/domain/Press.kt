@@ -1,22 +1,91 @@
 package io.embodit.pianofall.domain
 
 /**
- * Fingers on the virtual piano (design `input.virtualPress`, T23). The keys stand only 8 mm above the desk, so a
- * press is a fingertip coming down onto the desk: within [touchM] of the desk top, moving down faster than
- * 0.05 m/s, inside a key's footprint -> note on (black keys first); lifted more than 10 mm -> note off. One finger
- * retriggers at most every 80 ms. Without a real desk (virtual desk) there is nothing to touch: [touchM] is wider.
+ * How much the virtual piano helps (v0.1.2, user on the headset: 「按键误触有点多，也不好控制，要不加个模糊逻辑，就是手指在
+ * 周围就算按到了，重点是让用户能爽起来」). Settings: 轻松 (default) / 标准 / 精确.
+ *
+ * - [snapWhites]: a press within this many white-key widths left / right of a key the song wants now lands on that key.
+ * - [minDownSpeed] / [pushDepthM]: a press is a fingertip coming down at least this fast, or pushed this far below the
+ *   key bed (a virtual desk has nothing to stop the finger); hovering, resting and brushing do nothing.
+ * - [debounceMs]: one finger triggers at most once in this time.
+ * - [perfectMs] / [lateMs]: timing windows of play-along scoring.
+ * - [strayVolume] / [strayIsWrong]: a press far from every wanted note sounds quieter and, below 精确, is not counted wrong.
+ */
+enum class AssistLevel(
+    val tag: String,
+    val snapWhites: Float,
+    val minDownSpeed: Float,
+    val pushDepthM: Float,
+    val debounceMs: Long,
+    val perfectMs: Float,
+    val lateMs: Float,
+    val strayVolume: Float,
+    val strayIsWrong: Boolean,
+) {
+    EASY("easy", 1.0f, 0.04f, 0.004f, 120L, 180f, 350f, 0.35f, false),
+    STANDARD("standard", 0.5f, 0.06f, 0.005f, 100L, 150f, 300f, 0.6f, false),
+    PRECISE("precise", 0f, 0.08f, 0.006f, 80L, 120f, 250f, 1f, true);
+
+    companion object {
+        fun of(tag: String?): AssistLevel = entries.firstOrNull { it.tag == tag } ?: EASY
+    }
+}
+
+/**
+ * Which key a press on the virtual piano means (pure; `KeyAssistTest`). [targets] are the keys the song wants now
+ * (the notes about to land or waiting). A fingertip within [AssistLevel.snapWhites] white widths of a target key, left
+ * or right, takes that key (the nearest target wins, the key under the finger first). With no target near, the key
+ * under the finger, or the nearest key when the finger is just in front of / behind the keys.
+ */
+object KeyAssist {
+    data class Resolved(val midi: Int, val snapped: Boolean, val stray: Boolean)
+
+    /** How far in front of the keys (towards the player) and behind them a press still counts, metres. */
+    const val FRONT_SLACK_M = 0.02f
+    const val BACK_SLACK_M = 0.02f
+
+    fun resolve(x: Float, z: Float, layout: KeyboardLayout, targets: Set<Int>, snapWhites: Float): Resolved? {
+        if (z > FRONT_SLACK_M || z < -KeyboardLayout.WHITE_DEPTH - BACK_SLACK_M) return null
+        val reach = snapWhites * layout.whiteW
+        if (x < -reach - 0.01f || x > layout.length + reach + 0.01f) return null
+        val under = layout.keyAt(x.coerceIn(0f, layout.length), z.coerceIn(-KeyboardLayout.WHITE_DEPTH, 0f))
+        if (targets.isNotEmpty()) {
+            if (under != null && under in targets) return Resolved(under, snapped = false, stray = false)
+            val near =
+                targets.mapNotNull { m -> layout.key(m)?.let { k -> m to gap(x, k.x0, k.x1) } }
+                    .filter { (_, d) -> d <= reach }
+                    .minByOrNull { (_, d) -> d }
+            if (near != null) return Resolved(near.first, snapped = true, stray = false)
+        }
+        val key = under ?: nearest(x, layout) ?: return null
+        return Resolved(key, snapped = false, stray = targets.isNotEmpty())
+    }
+
+    private fun gap(x: Float, x0: Float, x1: Float): Float = if (x < x0) x0 - x else if (x > x1) x - x1 else 0f
+
+    private fun nearest(x: Float, layout: KeyboardLayout): Int? = layout.all.filter { !it.black }.minByOrNull { gap(x, it.x0, it.x1) }?.midi
+}
+
+/**
+ * Fingers on the virtual piano (design `input.virtualPress`, T23, v0.1.2 assist). The keys stand only 8 mm above the
+ * desk, so a press is a fingertip coming down onto the desk: within [touchM] of the desk top and moving down at least
+ * [AssistLevel.minDownSpeed], or pushed [AssistLevel.pushDepthM] below it; and it must have come from above (it was
+ * higher than the touch height within the last 300 ms): a finger resting or sliding on the desk, or a palm, does
+ * nothing. Lifted more than 10 mm -> note off. One finger triggers at most once per [AssistLevel.debounceMs]. Which
+ * key: [KeyAssist]. Without a real desk (virtual desk) there is nothing to touch: [touchM] is wider.
  *
  * Positions are keyboard-local (x along the keys, y up from the desk top, z towards the player).
  */
-class FingerPress(private val layout: () -> KeyboardLayout?) {
+class FingerPress(private val layout: () -> KeyboardLayout?, private val targets: () -> Set<Int> = { emptySet() }) {
     var touchM = TOUCH_REAL_M
+    var assist = AssistLevel.EASY
 
-    private class Finger(var y: Float = Float.NaN, var tMs: Long = 0L, var key: Int? = null, var lastOnMs: Long = -10_000L)
+    private class Finger(var y: Float = Float.NaN, var tMs: Long = 0L, var key: Int? = null, var lastOnMs: Long = -10_000L, var aboveMs: Long = -10_000L)
 
     private val fingers = HashMap<Int, Finger>()
 
     sealed interface Change {
-        data class On(val finger: Int, val midi: Int, val velocity: Float) : Change
+        data class On(val finger: Int, val midi: Int, val velocity: Float, val snapped: Boolean = false, val stray: Boolean = false) : Change
 
         data class Off(val finger: Int, val midi: Int) : Change
     }
@@ -28,6 +97,7 @@ class FingerPress(private val layout: () -> KeyboardLayout?) {
         val vy = if (f.y.isNaN() || dt <= 0f || dt > 0.2f) 0f else (local.y - f.y) / dt
         f.y = local.y
         f.tMs = nowMs
+        if (local.y > touchM + ABOVE_M) f.aboveMs = nowMs
         val down = f.key
         if (down != null) {
             if (local.y > RELEASE_M) {
@@ -36,12 +106,15 @@ class FingerPress(private val layout: () -> KeyboardLayout?) {
             }
             return null
         }
-        if (local.y > touchM || vy > -MIN_DOWN_SPEED) return null
-        if (nowMs - f.lastOnMs < DEBOUNCE_MS) return null
-        val key = layout()?.keyAt(local.x, local.z) ?: return null
-        f.key = key
+        if (local.y > touchM) return null
+        val struck = -vy >= assist.minDownSpeed || local.y <= -assist.pushDepthM
+        if (!struck || nowMs - f.aboveMs > CAME_FROM_ABOVE_MS) return null
+        if (nowMs - f.lastOnMs < assist.debounceMs) return null
+        val l = layout() ?: return null
+        val r = KeyAssist.resolve(local.x, local.z, l, targets(), assist.snapWhites) ?: return null
+        f.key = r.midi
         f.lastOnMs = nowMs
-        return Change.On(finger, key, velocity(-vy))
+        return Change.On(finger, r.midi, velocity(-vy), r.snapped, r.stray)
     }
 
     /** A finger that is no longer tracked lets go of its key. */
@@ -60,8 +133,8 @@ class FingerPress(private val layout: () -> KeyboardLayout?) {
         const val TOUCH_REAL_M = 0.004f
         const val TOUCH_VIRTUAL_M = 0.006f
         const val RELEASE_M = 0.010f
-        const val MIN_DOWN_SPEED = 0.05f
-        const val DEBOUNCE_MS = 80L
+        const val ABOVE_M = 0.003f
+        const val CAME_FROM_ABOVE_MS = 300L
 
         /** Three loudness steps by the speed coming down (design: 力度按下压速度分 3 档). */
         fun velocity(speed: Float): Float = when {

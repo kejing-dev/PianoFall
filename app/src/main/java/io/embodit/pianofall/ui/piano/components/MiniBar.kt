@@ -93,8 +93,13 @@ internal fun MiniBar(state: PianoUiState?, onEvent: (PianoEvent) -> Unit) {
                         androidx.compose.foundation.layout.Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
                                 // the green lives in the breathing keys; the words stay in the label role (D13 contrast)
-                                text = if (waiting) "● " + rs(R.string.wait_you) else (if (isZh()) state.song.zh else state.song.en),
-                                style = PianoType.hint,
+                                text =
+                                    when {
+                                        waiting -> "● " + rs(R.string.wait_you)
+                                        state.combo >= 2 -> rs(R.string.combo_n, state.combo) + gradeWord(state)
+                                        else -> if (isZh()) state.song.zh else state.song.en
+                                    },
+                                style = if (state.combo >= 2 && !waiting) PianoType.label else PianoType.hint,
                                 color = PicoTheme.colorScheme.labelPrimary,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
@@ -177,3 +182,12 @@ private fun HoldPause(onEvent: (PianoEvent) -> Unit) {
 private const val HOLD_MS = 600L
 
 internal fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier = this.clickable(onClick = onClick)
+
+/** " · Perfect" / " · Good" after the combo (early / late count as Good). */
+@androidx.compose.runtime.Composable
+private fun gradeWord(state: PianoUiState): String =
+    when (state.lastGrade) {
+        io.embodit.pianofall.domain.Grade.PERFECT -> " · " + rs(R.string.grade_perfect)
+        null -> ""
+        else -> " · " + rs(R.string.grade_good)
+    }

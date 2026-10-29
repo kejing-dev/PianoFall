@@ -72,6 +72,9 @@ data class PianoUiState(
     val countdown: Int = 0,
     val progress: Float = 0f,
     val waitingKeys: Set<Int> = emptySet(),
+    /** Hits in a row and the grade of the last hit (mini bar, v0.1.2). */
+    val combo: Int = 0,
+    val lastGrade: io.embodit.pianofall.domain.Grade? = null,
     /** S11: semitones of the suspected octave shift (+12 / -12), or null. */
     val octaveHint: Int? = null,
     val score: Score? = null,

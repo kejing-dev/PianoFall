@@ -25,7 +25,9 @@ import com.pico.spatial.ui.geometry.Offset3D
 import io.embodit.pianofall.domain.Desk
 import io.embodit.pianofall.domain.Desks
 import io.embodit.pianofall.domain.DragLine
+import io.embodit.pianofall.domain.AssistLevel
 import io.embodit.pianofall.domain.FingerPress
+import io.embodit.pianofall.domain.KeyAssist
 import io.embodit.pianofall.domain.Geo2
 import io.embodit.pianofall.domain.HandPart
 import io.embodit.pianofall.domain.HeadPose
@@ -173,7 +175,7 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
     }
 
     // ---- input
-    private val fingers = FingerPress { shownFrame()?.layout }
+    private val fingers = FingerPress({ shownFrame()?.layout }, { assistTargets() })
     private val ctrlKey = HashMap<Boolean, Int>() // controller (right?) -> key held by trigger
     private val tipKey = HashMap<Boolean, Int>() // controller (right?) -> key held by its tip
     private var pinchWasDown = false
@@ -471,7 +473,9 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
     private fun preview(state: PianoUiState) {
         val k = state.keyboard
         val shift = if (k != null) state.song.octaveShiftFor(k.count) else 0
-        perf = Performance(state.song, state.options, state.canScore, shift, state.settings.lookAheadSec.toFloat())
+        // the assist level's timing windows only for the virtual piano (a real piano keeps the design's ±150 / 300 ms)
+        val a = if (state.virtual) state.settings.assist else AssistLevel.STANDARD
+        perf = Performance(state.song, state.options, state.canScore, shift, state.settings.lookAheadSec.toFloat(), a.perfectMs, a.lateMs)
     }
 
     // =========================================================================================
@@ -790,6 +794,8 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
         val k = shownFrame() ?: return
         val l = k.layout
         fingers.touchM = if (ui.desk?.virtual == false) FingerPress.TOUCH_REAL_M else FingerPress.TOUCH_VIRTUAL_M
+        fingers.assist = ui.settings.assist
+        val assist = ui.settings.assist
         val seen = HashSet<Int>()
         for (h in samples) {
             h.tips.forEachIndexed { i, tip ->
@@ -811,19 +817,19 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
             val up = if (c.right) edges.upRight else edges.upLeft
             if (down) {
                 val t = c.ray.toLevel(k.origin.y, 2.5f)
-                val key = t?.let { k.toLocal(c.ray.at(it)) }?.let { l.keyAt(it.x, it.z) }
-                if (key != null) {
-                    ctrlKey[c.right] = key
-                    keyDown(key, 0.85f, if (c.right) "ctrl-right" else "ctrl-left", now)
+                val r = t?.let { k.toLocal(c.ray.at(it)) }?.let { KeyAssist.resolve(it.x, it.z, l, assistTargets(), assist.snapWhites) }
+                if (r != null) {
+                    ctrlKey[c.right] = r.midi
+                    keyDown(r.midi, 0.85f, if (c.right) "ctrl-right" else "ctrl-left", now, stray = r.stray, controllerRight = c.right)
                 }
             }
             if (up || !controller.triggerHeld(c.right)) ctrlKey.remove(c.right)?.let { keyUp(it) }
             val tipLocal = k.toLocal(c.tip)
             val held = tipKey[c.right]
             if (held == null && tipLocal.y < 0.004f && tipLocal.y > -0.03f) {
-                l.keyAt(tipLocal.x, tipLocal.z)?.let {
-                    tipKey[c.right] = it
-                    keyDown(it, 0.8f, "ctrl-tip", now)
+                KeyAssist.resolve(tipLocal.x, tipLocal.z, l, assistTargets(), assist.snapWhites)?.let {
+                    tipKey[c.right] = it.midi
+                    keyDown(it.midi, 0.8f, "ctrl-tip", now, stray = it.stray, controllerRight = c.right)
                 }
             } else if (held != null && tipLocal.y > 0.012f) {
                 tipKey.remove(c.right)
@@ -834,7 +840,7 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
 
     private fun applyFinger(c: FingerPress.Change, now: Long) {
         when (c) {
-            is FingerPress.Change.On -> keyDown(c.midi, c.velocity, "finger${c.finger}", now)
+            is FingerPress.Change.On -> keyDown(c.midi, c.velocity, "finger${c.finger}${if (c.snapped) "-snap" else ""}", now, stray = c.stray)
             is FingerPress.Change.Off -> keyUp(c.midi)
         }
     }
@@ -847,18 +853,40 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
         if (on) keyDown(m, velocity / 127f, "midi", atMs) else keyUp(m)
     }
 
-    /** A key went down (any source). The virtual piano sounds at once; the run hears it. */
-    fun keyDown(midiNote: Int, velocity: Float, source: String, atMs: Long = SystemClock.elapsedRealtime()) {
+    /**
+     * A key went down (any source). The virtual piano sounds at once (a [stray] press, far from every note the song
+     * wants, quieter); the run hears it. [controllerRight] = the controller that pressed it, for the hit buzz.
+     */
+    fun keyDown(midiNote: Int, velocity: Float, source: String, atMs: Long = SystemClock.elapsedRealtime(), stray: Boolean = false, controllerRight: Boolean? = null) {
+        val assist = ui.settings.assist
         if (ui.virtual) {
-            audio?.noteOn(midiNote, velocity, atMs)
+            audio?.noteOn(midiNote, if (stray) velocity * assist.strayVolume else velocity, atMs)
             piano?.press(midiNote, true)
         }
         val p = perf
         val running = p != null && ui.designState in setOf("S10", "S11")
-        val expected = p?.pendingKeys?.joinToString(",") ?: ""
-        val e = if (running) p?.noteOn(midiNote) else null
-        PianoLog.i("PIANO t=${p?.t?.let { "%.3f".format(Locale.US, it) }} src=$source note=$midiNote expected=$expected hit=${e?.javaClass?.simpleName ?: "-"} latency_ms=${SystemClock.elapsedRealtime() - atMs}")
+        val expected = (if (ui.virtual) assistTargets() else p?.pendingKeys)?.joinToString(",") ?: ""
+        val e = if (running) p?.noteOn(midiNote, strayIsFree = ui.virtual && stray && !assist.strayIsWrong) else null
+        PianoLog.i("PIANO t=${p?.t?.let { "%.3f".format(Locale.US, it) }} src=$source note=$midiNote expected=$expected stray=$stray hit=${(e as? PerfEvent.Hit)?.grade ?: e?.javaClass?.simpleName ?: "-"} latency_ms=${SystemClock.elapsedRealtime() - atMs}")
         if (e != null) perfEvent(e, SystemClock.elapsedRealtime())
+        if (e is PerfEvent.Hit || (e is PerfEvent.Waiting && !e.on)) controllerRight?.let { buzz(it) }
+    }
+
+    /** The keys the song wants now (virtual piano, during a run): the snapping targets of [KeyAssist]. */
+    private fun assistTargets(): Set<Int> {
+        val p = perf ?: return emptySet()
+        if (!ui.virtual || ui.designState !in setOf("S10", "S11")) return emptySet()
+        return p.targets()
+    }
+
+    /** Set by the screen from `LocalHandControllerHaptic` (SpatialUI's public haptic instance). */
+    var haptic: com.pico.spatial.ui.platform.SpatialHandControllerHaptic? = null
+
+    /** A short buzz on the controller that hit the note (v0.1.2 「反馈要爽」). */
+    private fun buzz(right: Boolean) {
+        val h = haptic ?: return
+        runCatching { h.feedback(com.pico.spatial.ui.platform.HandControllerHapticType.Press, if (right) com.pico.spatial.ui.platform.HandController.Right else com.pico.spatial.ui.platform.HandController.Left) }
+            .onFailure { PianoLog.w("HAPTIC failed: $it") }
     }
 
     fun keyUp(midiNote: Int) {
@@ -910,9 +938,19 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
                 audio?.noteOff(e.midi)
                 piano?.press(e.midi, false)
             }
-            is PerfEvent.Hit -> lights.flash(e.midi, m.flash, now + HIT_FLASH_MS)
-            is PerfEvent.Wrong -> lights.flash(e.midi, m.wrong, now + WRONG_FLASH_MS)
-            is PerfEvent.Missed -> lights.missedUntil[e.note.midi] = now + MISSED_MS
+            is PerfEvent.Hit -> {
+                lights.flash(e.midi, m.flash, now + HIT_FLASH_MS)
+                // the mini bar shows the combo and the grade
+                sink(PianoEvent.Perf(e))
+            }
+            is PerfEvent.Wrong -> {
+                lights.flash(e.midi, m.wrong, now + WRONG_FLASH_MS)
+                sink(PianoEvent.Perf(e))
+            }
+            is PerfEvent.Missed -> {
+                lights.missedUntil[e.note.midi] = now + MISSED_MS
+                sink(PianoEvent.Perf(e))
+            }
             is PerfEvent.Waiting -> {
                 lights.waiting.fill(false)
                 e.keys.forEach { if (it in 0..127) lights.waiting[it] = true }
@@ -1265,6 +1303,20 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
     fun debugPress(midiNote: Int, holdMs: Long, source: String) {
         keyDown(midiNote, 0.8f, source)
         main.postDelayed({ keyUp(midiNote) }, holdMs)
+    }
+
+    /**
+     * Debug `fingerNear`: a fingertip strikes [offsetWhites] white widths beside key [midi] (keyboard-local), through the
+     * same assist as a real finger. Logs what it resolved to.
+     */
+    fun debugFingerNear(midi: Int, offsetWhites: Float, holdMs: Long): String {
+        val k = shownFrame() ?: return "no keyboard"
+        val key = k.layout.key(midi) ?: return "no key $midi"
+        val x = key.cx + offsetWhites * k.layout.whiteW
+        val r = KeyAssist.resolve(x, -0.03f, k.layout, assistTargets(), ui.settings.assist.snapWhites) ?: return "outside"
+        keyDown(r.midi, 0.8f, "debug-finger${if (r.snapped) "-snap" else ""}", stray = r.stray)
+        main.postDelayed({ keyUp(r.midi) }, holdMs)
+        return "finger x=${"%.4f".format(Locale.US, x)} -> ${r.midi} snapped=${r.snapped} stray=${r.stray} targets=${assistTargets()} assist=${ui.settings.assist.tag}"
     }
 
     /** Debug `ghost`: the ghost / a placement as if the controller ray met the desk at [at]. */

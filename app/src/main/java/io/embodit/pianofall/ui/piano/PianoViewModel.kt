@@ -506,6 +506,8 @@ class PianoViewModel(
                 newBest = false,
                 octaveHint = null,
                 waitingKeys = emptySet(),
+                combo = 0,
+                lastGrade = null,
                 songs = it.songs + (s.songId to nextMem),
                 showLegend = !it.settings.legendSeen,
                 handsLeft = false,
@@ -566,7 +568,9 @@ class PianoViewModel(
                 if (e.on && s.designState == "S10") go("S11")
                 if (!e.on && s.designState == "S11") go("S10")
             }
-            is PerfEvent.OctaveHint -> update { it.copy(octaveHint = e.semitones) }
+            is PerfEvent.OctaveHint -> update { it.copy(octaveHint = e.semitones, combo = 0) }
+            is PerfEvent.Hit -> update { it.copy(combo = e.combo, lastGrade = e.grade) }
+            is PerfEvent.Missed, is PerfEvent.Wrong -> if (s.combo != 0) update { it.copy(combo = 0) }
             is PerfEvent.Finished -> finish(e.score)
             else -> Unit
         }

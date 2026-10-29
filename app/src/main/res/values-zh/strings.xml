@@ -141,4 +141,12 @@
     <string name="midi_test_ok" formatted="false">✓ 收到中央 C</string>
     <string name="input_none" formatted="false">不用（只跟着走）</string>
     <string name="ok" formatted="false">确定</string>
+    <string name="set_assist" formatted="false">辅助强度</string>
+    <string name="assist_easy" formatted="false">轻松</string>
+    <string name="assist_standard" formatted="false">标准</string>
+    <string name="assist_precise" formatted="false">精确</string>
+    <string name="assist_hint" formatted="false">桌面琴：手指偏多远还算按到该弹的键、节奏放多宽</string>
+    <string name="combo_n">连击 %1$d</string>
+    <string name="grade_perfect" formatted="false">Perfect</string>
+    <string name="grade_good" formatted="false">Good</string>
 </resources>

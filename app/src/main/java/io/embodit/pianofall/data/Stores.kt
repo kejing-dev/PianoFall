@@ -1,6 +1,7 @@
 package io.embodit.pianofall.data
 
 import android.content.Context
+import io.embodit.pianofall.domain.AssistLevel
 import io.embodit.pianofall.domain.HandSel
 import io.embodit.pianofall.domain.KeyCount
 import io.embodit.pianofall.domain.LanguagePref
@@ -63,6 +64,7 @@ class PrefsPianoStore(context: Context) : PianoStore {
             panelSide = PanelSide.entries.firstOrNull { it.tag == prefs.getString("side", null) } ?: PanelSide.CENTER,
             midiOffset = prefs.getInt("midiOffset", 0),
             legendSeen = prefs.getBoolean("legend", false),
+            assist = AssistLevel.of(prefs.getString("assist", null)),
         )
 
     override fun saveSettings(settings: Settings) {
@@ -75,6 +77,7 @@ class PrefsPianoStore(context: Context) : PianoStore {
             .putString("side", settings.panelSide.tag)
             .putInt("midiOffset", settings.midiOffset)
             .putBoolean("legend", settings.legendSeen)
+            .putString("assist", settings.assist.tag)
             .apply()
     }
 

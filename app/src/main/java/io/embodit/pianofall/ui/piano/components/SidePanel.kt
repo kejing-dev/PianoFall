@@ -566,6 +566,10 @@ private fun ColumnScope.SettingsPage(s: PianoUiState, onEvent: (PianoEvent) -> U
         LabelRow(rs(R.string.set_volume)) {
             Segments(listOf(0.3f, 0.5f, 0.7f, 1f).map { it to "${(it * 100).toInt()}%" }, listOf(0.3f, 0.5f, 0.7f, 1f).minByOrNull { kotlin.math.abs(it - st.volume) }!!, "volume", 69.dp) { v -> set { it.copy(volume = v) } }
         }
+        LabelRow(rs(R.string.set_assist)) {
+            Segments(io.embodit.pianofall.domain.AssistLevel.entries.map { it to rs(assistName(it)) }, st.assist, "assist", 80.dp) { v -> set { it.copy(assist = v) } }
+        }
+        Text(text = rs(R.string.assist_hint), style = PianoType.hint, color = PicoTheme.colorScheme.labelSecondary, maxLines = 2)
         LabelRow(rs(R.string.set_metronome)) { Switch(checked = st.metronome, onCheckedChange = { on -> set { it.copy(metronome = on) } }, modifier = Modifier.probe("metronome")) }
         LabelRow(rs(R.string.set_lookahead)) {
             Segments(listOf(2, 3, 4).map { it to rs(R.string.seconds_n, it) }, st.lookAheadSec, "lookahead", 69.dp) { v -> set { it.copy(lookAheadSec = v) } }
@@ -624,3 +628,10 @@ private fun ColumnScope.PianoMenu(s: PianoUiState, onEvent: (PianoEvent) -> Unit
         Action(rs(R.string.close), "closeMenu", width = 120.dp) { onEvent(PianoEvent.OverlayClicked(Overlay.PIANO_MENU)) }
     }
 }
+
+private fun assistName(a: io.embodit.pianofall.domain.AssistLevel): Int =
+    when (a) {
+        io.embodit.pianofall.domain.AssistLevel.EASY -> R.string.assist_easy
+        io.embodit.pianofall.domain.AssistLevel.STANDARD -> R.string.assist_standard
+        io.embodit.pianofall.domain.AssistLevel.PRECISE -> R.string.assist_precise
+    }

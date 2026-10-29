@@ -23,6 +23,8 @@ data class Settings(
     val midiOffset: Int = 0,
     /** The left / right hand legend was shown once (S08, B19). */
     val legendSeen: Boolean = false,
+    /** How much the virtual piano helps (v0.1.2): 轻松 by default. */
+    val assist: AssistLevel = AssistLevel.EASY,
 )
 
 /** Per song: last speed and hands, best result (design `scoring.storage`). */

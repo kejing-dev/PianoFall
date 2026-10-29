@@ -59,7 +59,7 @@ sealed interface PerfEvent {
 
     data class Waiting(val on: Boolean, val keys: Set<Int>) : PerfEvent
 
-    data class Hit(val midi: Int, val grade: Grade) : PerfEvent
+    data class Hit(val midi: Int, val grade: Grade, val combo: Int = 0) : PerfEvent
 
     data class Wrong(val midi: Int) : PerfEvent
 
@@ -81,7 +81,16 @@ enum class Grade { PERFECT, EARLY, LATE }
  * Timing windows are in real milliseconds (design T28: ±150 ms = on time, 150 - 300 ms = early / late; S11: a
  * press counts from 250 ms before the group lands).
  */
-class Performance(val song: Song, val options: PlayOptions, val canScore: Boolean, val transpose: Int = 0, val lookAheadSec: Float = 3f) {
+class Performance(
+    val song: Song,
+    val options: PlayOptions,
+    val canScore: Boolean,
+    val transpose: Int = 0,
+    val lookAheadSec: Float = 3f,
+    /** Timing windows of play-along (real ms): on time, and the outer early / late edge (v0.1.2 assist levels). */
+    val perfectMs: Float = PERFECT_MS,
+    val lateMs: Float = LATE_MS,
+) {
     val notes: List<PlayNote> =
         song.notes.mapIndexed { i, n -> PlayNote(i, song.sec(n.start), song.sec(n.start + n.length), n.midi + transpose, n.hand, options.hands.practises(n.hand)) }
             .sortedBy { it.start }
@@ -184,8 +193,9 @@ class Performance(val song: Song, val options: PlayOptions, val canScore: Boolea
                 sounding.remove(n.index)
                 out += PerfEvent.AutoOff(n.midi)
             }
-            if (options.mode == PlayMode.FOLLOW && canScore && n.practice && !hit[n.index] && !missed[n.index] && n.start + realToSong(LATE_MS) < to) {
+            if (options.mode == PlayMode.FOLLOW && canScore && n.practice && !hit[n.index] && !missed[n.index] && n.start + realToSong(lateMs) < to) {
                 missed[n.index] = true
+                combo = 0
                 out += PerfEvent.Missed(n)
             }
         }
@@ -202,30 +212,64 @@ class Performance(val song: Song, val options: PlayOptions, val canScore: Boolea
     }
 
     /** A key went down (MIDI, a finger on the virtual key, the controller); [midi] after the keyboard's offset. */
-    fun noteOn(midi: Int): PerfEvent? {
+    fun noteOn(midi: Int, strayIsFree: Boolean = false): PerfEvent? {
         if (finished || !canScore) return null
+        val e =
+            when (options.mode) {
+                PlayMode.LISTEN -> null
+                PlayMode.FOLLOW -> follow(midi, strayIsFree)
+                PlayMode.WAIT -> waitPress(midi, strayIsFree)
+            }
+        if (e is PerfEvent.Wrong || e is PerfEvent.OctaveHint) combo = 0
+        return e
+    }
+
+    /** Hits in a row (missed and wrong notes reset it); the mini bar shows it. */
+    var combo = 0
+        private set
+
+    /** First hit time of each chord (by its start): later fingers of the same chord are graded on it. */
+    private val chordFirstHit = HashMap<Float, Float>()
+
+    /**
+     * The keys the song wants now, for the virtual piano's snapping (v0.1.2): play-along -> the practice notes within
+     * the timing window not yet played; wait -> the group waited for, or the next one once its window is open.
+     */
+    fun targets(): Set<Int> {
+        if (finished || !canScore) return emptySet()
         return when (options.mode) {
-            PlayMode.LISTEN -> null
-            PlayMode.FOLLOW -> follow(midi)
-            PlayMode.WAIT -> waitPress(midi)
+            PlayMode.LISTEN -> emptySet()
+            PlayMode.FOLLOW -> {
+                val w = realToSong(lateMs)
+                notes.asSequence().filter { it.practice && !hit[it.index] && !missed[it.index] && abs(it.start - t) <= w }.map { it.midi }.toSet()
+            }
+            PlayMode.WAIT -> {
+                if (waiting) return pendingKeys
+                val g = nextGroupStart(t) ?: return emptySet()
+                if (g - t > realToSong(EARLY_WAIT_MS)) emptySet() else notes.filter { it.practice && abs(it.start - g) < 1e-4f && !hit[it.index] }.map { it.midi }.toSet()
+            }
         }
     }
 
-    private fun follow(midi: Int): PerfEvent {
-        val window = realToSong(LATE_MS)
+    private fun follow(midi: Int, strayIsFree: Boolean): PerfEvent? {
+        val window = realToSong(lateMs)
         val n = notes.filter { it.practice && it.midi == midi && !hit[it.index] && !missed[it.index] && abs(it.start - t) <= window }.minByOrNull { abs(it.start - t) }
         if (n == null) {
+            if (strayIsFree) return null
             wrong++
             return PerfEvent.Wrong(midi)
         }
         hit[n.index] = true
-        val dMs = (t - n.start) / rate * 1000f
-        val grade = if (abs(dMs) <= PERFECT_MS) Grade.PERFECT else if (dMs < 0) Grade.EARLY else Grade.LATE
+        // a chord's fingers rarely land together: every note of it is graded on the chord's first hit
+        val at = chordFirstHit.getOrPut(n.start) { t }
+        val dMs = (at - n.start) / rate * 1000f
+        val grade = if (abs(dMs) <= perfectMs) Grade.PERFECT else if (dMs < 0) Grade.EARLY else Grade.LATE
         if (grade == Grade.PERFECT) perfect++ else earlyLate++
-        return PerfEvent.Hit(midi, grade)
+        combo++
+        return PerfEvent.Hit(midi, grade, combo)
     }
 
-    private fun waitPress(midi: Int): PerfEvent? {
+    private fun waitPress(midi: Int, strayIsFree: Boolean): PerfEvent? {
         // the window of the next group opens 250 ms (real) before it lands
         if (!waiting) {
             val g = nextGroupStart(t) ?: return null
@@ -237,6 +281,7 @@ class Performance(val song: Song, val options: PlayOptions, val canScore: Boolea
             pending.remove(match)
             hit[match] = true
             perfect++
+            combo++
             octaveStreak = 0
             if (pending.isEmpty()) {
                 groupStartDone = groupStart
@@ -245,8 +290,9 @@ class Performance(val song: Song, val options: PlayOptions, val canScore: Boolea
                     return PerfEvent.Waiting(false, emptySet())
                 }
             }
-            return PerfEvent.Hit(midi, Grade.PERFECT)
+            return PerfEvent.Hit(midi, Grade.PERFECT, combo)
         }
+        if (strayIsFree && pending.none { notes[it].midi - midi == 12 || notes[it].midi - midi == -12 }) return null
         wrong++
         val octave = pending.map { notes[it].midi - midi }.firstOrNull { it == 12 || it == -12 }
         if (octave != null) {
@@ -308,6 +354,8 @@ class Performance(val song: Song, val options: PlayOptions, val canScore: Boolea
         groupStart = Float.NaN
         groupStartDone = Float.NaN
         pending.clear()
+        chordFirstHit.keys.removeAll { it >= to - 1e-6f }
+        combo = 0
         sounding.clear()
         for (n in notes) {
             if (n.start >= to - 1e-6f) {

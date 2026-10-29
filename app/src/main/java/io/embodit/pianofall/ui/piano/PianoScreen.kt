@@ -15,6 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pico.spatial.ui.foundation.dsl.registerSystem
 import com.pico.spatial.ui.foundation.dsl.unregisterSystem
+import com.pico.spatial.ui.platform.LocalHandControllerHaptic
 import com.pico.spatial.ui.platform.LocalStageUpperLimbRenderModelManager
 import com.pico.spatial.ui.platform.ability.UpperLimbRenderMode
 import io.embodit.pianofall.platform.PianoLog
@@ -79,6 +80,10 @@ fun PianoScreen() {
     }
 
     LaunchedEffect(scene, state) { scene.render(state) }
+
+    // SpatialUI's public controller haptics: the scene buzzes the controller that hit a note (v0.1.2)
+    val haptic = LocalHandControllerHaptic.current
+    LaunchedEffect(scene, haptic) { scene.haptic = haptic }
 
     // the real hands over the virtual keys (design `container.upperLimbRenderMode`: hands must be seen to play)
     val limbs = LocalStageUpperLimbRenderModelManager.current

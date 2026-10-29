@@ -11,7 +11,7 @@ class PressTest {
 
     @Test
     fun aFingertipComingDownOntoTheDeskPressesTheKey() {
-        val f = FingerPress { layout }
+        val f = FingerPress({ layout })
         assertNull(f.sample(1, Vec3(c4.cx, 0.03f, -0.02f), 0))
         assertNull(f.sample(1, Vec3(c4.cx, 0.015f, -0.02f), 50))
         val on = f.sample(1, Vec3(c4.cx, 0.002f, -0.02f), 100)
@@ -25,7 +25,7 @@ class PressTest {
 
     @Test
     fun aRestingFingerDoesNotPress() {
-        val f = FingerPress { layout }
+        val f = FingerPress({ layout })
         assertNull(f.sample(2, Vec3(c4.cx, 0.003f, -0.02f), 0))
         assertNull(f.sample(2, Vec3(c4.cx, 0.003f, -0.02f), 50))
     }

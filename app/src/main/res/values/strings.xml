@@ -141,4 +141,12 @@
     <string name="midi_test_ok" formatted="false">✓ Middle C received</string>
     <string name="input_none" formatted="false">None (play along only)</string>
     <string name="ok" formatted="false">OK</string>
+    <string name="set_assist" formatted="false">Assist</string>
+    <string name="assist_easy" formatted="false">Easy</string>
+    <string name="assist_standard" formatted="false">Standard</string>
+    <string name="assist_precise" formatted="false">Precise</string>
+    <string name="assist_hint" formatted="false">Desk piano: how far a finger may miss the key the song wants, and how loose the timing is</string>
+    <string name="combo_n">Combo %1$d</string>
+    <string name="grade_perfect" formatted="false">Perfect</string>
+    <string name="grade_good" formatted="false">Good</string>
 </resources>
