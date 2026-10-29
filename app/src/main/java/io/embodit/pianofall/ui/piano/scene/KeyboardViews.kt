@@ -361,6 +361,48 @@ internal class EndRing(parent: Entity, meshes: PianoMeshes, m: PianoMaterials, n
 }
 
 /**
+ * The free side panel's grab bar (D21): a pale bar under the panel's bottom edge, with a generous collider.
+ * Dragged by the system gesture (gaze + pinch, controller ray + trigger); placed in Stage metres.
+ */
+internal class PanelHandle(parent: Entity, meshes: PianoMeshes, m: PianoMaterials) {
+    val entity: Entity = Entity()
+    private val bar = ModelEntity(meshes.cube, m.dashed)
+    private var on = true
+
+    init {
+        runCatching { entity.setName("panelHandle") }
+        runCatching { bar.setName("panelHandle:bar") }
+        parent.addChild(entity)
+        entity.addChild(bar)
+        bar.setLocal(scale = Vec3(WIDTH_M, HEIGHT_M, 0.006f))
+        entity.components.set(CollisionComponent(collisionShape = listOf(ShapeResource.createBox(Vector3(WIDTH_M + 0.06f, HEIGHT_M + 0.04f, 0.04f))), physicsMaterial = PhysicsMaterialResource()))
+        entity.components.set(InteractableComponent())
+        show(false)
+    }
+
+    fun owns(e: Entity): Boolean = e.id == entity.id || e.id == bar.id
+
+    fun place(at: Vec3, rotation: Quat4) {
+        entity.setLocal(position = at, rotation = rotation)
+        show(true)
+    }
+
+    fun show(visible: Boolean) {
+        if (visible != on) {
+            entity.enabled = visible
+            on = visible
+        }
+    }
+
+    companion object {
+        const val WIDTH_M = 0.14f
+        const val HEIGHT_M = 0.012f
+        /** Gap between the panel's bottom edge and the bar's centre. */
+        const val BELOW_M = 0.028f
+    }
+}
+
+/**
  * The 1:1 virtual piano (design `virtualPiano`): flat lacquer body, keys only 8 mm above the desk (black keys
  * 6 mm higher), every key a tap target. The same builder makes the debug white-model piano (E8) under a real
  * keyboard on the emulator. Keyboard-local: y = 0 is the white key tops.

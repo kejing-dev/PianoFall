@@ -37,6 +37,7 @@ import io.embodit.pianofall.domain.Keys
 import io.embodit.pianofall.domain.LengthSnap
 import io.embodit.pianofall.domain.P2
 import io.embodit.pianofall.domain.PanelFacing
+import io.embodit.pianofall.domain.PanelStation
 import io.embodit.pianofall.domain.PerfEvent
 import io.embodit.pianofall.domain.Performance
 import io.embodit.pianofall.domain.PianoPlacement
@@ -305,6 +306,7 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
         piano = VirtualPianoView(kr, meshes, m)
         delay(BUILD_STEP_MS)
         desk = DeskViews(root, meshes, m)
+        panelHandle = PanelHandle(root, meshes, m)
         built = true
         PianoLog.i("SCENE built ms=${SystemClock.elapsedRealtime() - t0} audioReady=${audio?.ready}")
         render(ui)
@@ -378,6 +380,7 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
         views = null
         piano = null
         desk = null
+        panelHandle = null
         runCatching { colliders?.clear() }
         colliders = null
         runCatching { rig?.release() }
@@ -440,7 +443,8 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
             grab = null
             liveEnd = null
         }
-        if (to == "S03") sidePanelFollow.reset()
+        // walking to the piano's left end: the free panel comes in front once, then stays (D21)
+        if (to == "S03" && hasHead) station.recall(pose)
         if (to == "S24") {
             ghostYaw = 0f
             pianoGrab = null
@@ -1153,18 +1157,20 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
     // panels
     // =========================================================================================
 
-    /** Before the keyboard is known: 0.55 m ahead of the eyes, 5° below the level gaze (design `panel.beforeAlign`). */
-    private val sidePanelFollow = LazyFollow("side", { h -> restAt(h, -PANEL_DOWN_DEG, PANEL_M) }, windowDeg = 40f, nearM = 0.3f, farM = 1.0f)
+    /**
+     * When it is not standing over the keys: put 0.55 m ahead of the eyes, 5° below the level gaze (design
+     * `panel.beforeAlign`), then fixed in the room (D21, v0.1.2): no turning every frame, no lazy follow. It moves
+     * only by its handle or 「拉到眼前」.
+     */
+    private val station = PanelStation(PANEL_M, PANEL_DOWN_DEG)
+    private var panelHandle: PanelHandle? = null
+    private var panelDrag: Vec3 = Vec3.ZERO
 
-    private fun restAt(h: HeadPose, upDeg: Float, dist: Float): Vec3 {
-        val f = h.level()
-        val u = Math.toRadians(upDeg.toDouble()).toFloat()
-        return h.position + f.at(0f) * (dist * cos(u)) + Vec3(0f, dist * sin(u), 0f)
-    }
-
-    /** Button "拉到眼前": the panel comes to the current head pose. */
+    /** Button "拉到眼前": the panel comes in front of the current gaze, then stays there. */
     fun pullPanel() {
-        sidePanelFollow.reset()
+        if (!hasHead) return
+        station.recall(pose)
+        PianoLog.i("PANEL recalled pos=${PianoLog.pos(station.position)}")
     }
 
     private fun placePanels(now: Long) {
@@ -1180,9 +1186,9 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
                 val at = k.toWorld(Vec3(x.coerceIn(0.1f, k.length - 0.1f), top.y + MINI_ABOVE_M + PanelSizes.MINI_H * DP_M * PANEL_SCALE / 2f, Curtain.Z - PANEL_BEHIND_M))
                 setFacing(mini, k, MINI_TILT_DEG)
                 mini.show(at)
+                panelHandle?.show(false)
             } else {
-                mini.fixed = null
-                sidePanelFollow.step(pose, now, hold = false)?.let { mini.show(it) } ?: mini.show()
+                showAtStation(mini)
             }
             return
         }
@@ -1195,10 +1201,21 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
             val z = Curtain.Z - PANEL_BEHIND_M
             setFacing(side, k, PANEL_TILT_DEG)
             side.show(k.toWorld(Vec3(cx.coerceIn(0.15f, k.length - 0.15f), y, z)))
+            panelHandle?.show(false)
             return
         }
-        side.fixed = null
-        sidePanelFollow.step(pose, now, hold = false)?.let { side.show(it) } ?: side.show()
+        showAtStation(side)
+    }
+
+    /** The free panel at its station, its handle under the bottom edge. */
+    private fun showAtStation(slot: PanelRig.Slot) {
+        station.ensure(pose)
+        val at = station.position ?: return
+        val f = station.facing
+        if (slot.fixed != f) slot.fixed = f
+        slot.show(at)
+        val halfH = slot.heightDp * DP_M * PANEL_SCALE / 2f
+        panelHandle?.place(at - f.up * (halfH + PanelHandle.BELOW_M), f.rotation)
     }
 
     private fun setFacing(slot: PanelRig.Slot, k: KeyboardFrame, tiltDeg: Float) {
@@ -1232,6 +1249,7 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
     }
 
     fun onSpatialDrag(phase: String, start: Offset3D?, value: SpatialDragValue) {
+        if (dragPanel(phase, value)) return
         val k = ui.keyboard ?: return
         when (phase) {
             "start" -> {
@@ -1274,6 +1292,33 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
         }
     }
 
+    /** The free panel's handle (D21): the panel follows the hand, stays where it is let go and turns to the user once. */
+    private fun dragPanel(phase: String, value: SpatialDragValue): Boolean {
+        when (phase) {
+            "start" -> {
+                val target = value.targetEntity ?: return false
+                if (panelHandle?.owns(target) != true) return false
+                panelDrag = Vec3.ZERO
+                station.startDrag()
+                PianoLog.i("PANEL drag start pos=${PianoLog.pos(station.position)}")
+            }
+            "move" -> {
+                if (!station.dragging) return false
+                val a = value.dragAmount
+                panelDrag = Vec3(panelDrag.x + a.x, panelDrag.y + a.y, panelDrag.z + a.z)
+                val moved = toStage(panelDrag.x, panelDrag.y, panelDrag.z) ?: return true
+                val origin = toStage(0f, 0f, 0f) ?: return true
+                station.drag(moved - origin)
+            }
+            else -> {
+                if (!station.dragging) return false
+                if (phase == "end") station.drop(pose.position) else station.cancelDrag()
+                PianoLog.i("PANEL drag $phase pos=${PianoLog.pos(station.position)} yaw=${"%.1f".format(Locale.US, Math.toDegrees(station.facing.yaw.toDouble()))}")
+            }
+        }
+        return true
+    }
+
     private fun toStage(x: Float, y: Float, z: Float): Vec3? {
         val c = content ?: return null
         val probe = contentProbe ?: return null
@@ -1292,6 +1337,14 @@ class PianoScene(private val sink: (PianoEvent) -> Unit) {
     fun debugStick(x: Float, ms: Long): String {
         controller.debugHold(x, ms)
         return String.format(Locale.US, "stick x=%.2f ms=%d state=%s", x, ms, ui.designState)
+    }
+
+    /** The handle's drag without a hand: the hand travels (dx, dy, dz) Stage metres, then lets go. */
+    fun debugPanelDrag(dx: Float, dy: Float, dz: Float): String {
+        station.startDrag()
+        station.drag(Vec3(dx, dy, dz))
+        station.drop(pose.position)
+        return "PANEL drag debug pos=${PianoLog.pos(station.position)}"
     }
 
     fun debugSeek(sec: Float) {

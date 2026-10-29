@@ -115,6 +115,8 @@ internal object DebugCommands {
             "fingerPress" -> scene.debugPress((nums.getOrNull(0) ?: 60f).toInt(), (nums.getOrNull(1) ?: 200f).toLong(), "debug-finger")
             "fingerNear" -> PianoLog.i("CMD " + scene.debugFingerNear((nums.getOrNull(0) ?: 60f).toInt(), nums.getOrNull(1) ?: 0f, (nums.getOrNull(2) ?: 200f).toLong()))
             "assist" -> vm.onEvent(PianoEvent.SettingsChanged(vm.current().settings.copy(assist = io.embodit.pianofall.domain.AssistLevel.of(s))))
+            "panelDrag" -> PianoLog.i(scene.debugPanelDrag(nums.getOrNull(0) ?: 0f, nums.getOrNull(1) ?: 0f, nums.getOrNull(2) ?: 0f))
+            "pullPanel" -> scene.pullPanel()
             "seek" -> scene.debugSeek(nums.getOrNull(0) ?: 0f)
             "handsReady" -> vm.onEvent(PianoEvent.HandsSeen(true, true))
             "inputDevice" -> vm.debugMidi(if (s == null || s == "none") null else s)

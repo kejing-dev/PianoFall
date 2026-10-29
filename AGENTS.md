@@ -67,6 +67,7 @@ PICO_6_1_Factory2 --adb-device emulator-5562 -y`. Camera down: `tools/harness/em
 - `ghost "" dx,dz,put` (S24, metres from the desk centre; put = 1 places it)
 - `song id hand,mode,speed%` (hand 0 L / 1 R / 2 both; mode 0 listen / 1 follow / 2 wait) -> S08
 - `noteOn "" midi,holdMs` (MIDI on a real keyboard, a key on the virtual one) · `fingerPress "" midi` · `seek "" sec`
+- `fingerNear "" midi,offsetWhites,holdMs` (a virtual-piano finger strike beside a key, through the assist; logs what it resolved to) · `assist easy|standard|precise`
 - `handsReady` · `inputDevice NAME|none` · `finish "" perfect,early,missed,wrong` (S13) · `mute`
 - `anchorRemoved` · `anchorJump "" mm` · `anchorBack` · `anchorFail on|off`
 - `ui NAME` presses a panel control (probe names: havePiano, noPiano, count:88, startAlign, checkC, alignDone, repin,
@@ -95,6 +96,10 @@ PICO_6_1_Factory2 --adb-device emulator-5562 -y`. Camera down: `tools/harness/em
 | S22 / S23 / S24 | `state S22` (5 s -> S23 without a near desk) · `ui deskDone` · `ghost "" 0.1,0.2,0` / `ghost "" 0,0.27,1` |
 
 The broadcast does not reach the app on the Swan headset: there only real input.
+
+## Virtual piano assist (v0.1.2)
+
+User on the headset: too many accidental keys, hard to control. `domain/Press.kt`: `AssistLevel` (轻松 default / 标准 / 精确: snap 1 / 0.5 / 0 white widths, strike speed, push depth, debounce 120 / 100 / 80 ms, timing windows 180-350 / 150-300 / 120-250 ms, stray volume, strays counted only on 精确), `KeyAssist.resolve` (snap to the keys `Performance.targets()` wants), `FingerPress` (strike must come from above within 300 ms). `Performance`: chords graded on their first hit, free strays, combo. Mini bar: 连击 N · Perfect / Good. Controller hits buzz via `LocalHandControllerHaptic`. The real piano keeps the design windows. Tests: `KeyAssistTest`.
 
 ## Runtime facts
 
