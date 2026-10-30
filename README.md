@@ -6,4 +6,4 @@
 |---|---|---|
 | `0f6c34ba` | [piano-fall] design · 琴键瀑布 | 1551 |
 | `db4466cc` | [piano-fall] build · 琴键瀑布 | 1950 |
-| `52ef7b33` | [piano-fall] release · 钢琴瀑布 v0.1.2 | 413 |
+| `52ef7b33` | [piano-fall] release · 钢琴瀑布 v0.1.2 | 469 |
